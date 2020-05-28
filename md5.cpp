@@ -1,9 +1,5 @@
 
 #include "md5.h"
-#include <stdio.h>
-#include "malloc.h"
-#include "string.h"
-#include <stdlib.h>
 
 //Sij表示第i轮第j步计算循环左移的位数
 #define S11 7
@@ -74,6 +70,8 @@ MyMD5::~MyMD5()
 }
 
 #define DIGEST_LEN 16 //摘要长度为128位，即16字节
+
+
 bool MyMD5::ReadFile(const char *fileName)
 {
 	//打开文件
@@ -81,27 +79,38 @@ bool MyMD5::ReadFile(const char *fileName)
 	if (curFile == NULL)
 	{
 		printf("Can't open the file!");
-		return false;
+		exit(1);
 	}
 	//定位至文件末位
 	fseek(curFile, 0, SEEK_END);
 	//获取文件偏移位置
 	int length = ftell(curFile);
+	printf("Read Length:%d\n", length);
 	//找到文件开头
 	fseek(curFile, 0, SEEK_SET);
 	//根据文件大小分配空间
-	UCHAR *fileContent = (UCHAR *)malloc(length);
+	UCHAR *fileContent = (UCHAR *)malloc(length+1);
+	fileContent[length] = '\0';
 	//读取文件内容
 	fread(fileContent, 1, length, curFile);
+	printf("Read Content:%s\n", fileContent);
 	//开展MD5的处理流程
 	Workflow(fileContent, length);
 	//关闭文件
 	fclose(curFile);
-	
+}
+
+bool MyMD5::ReadInput(char *content) 
+{
+	UINT length = strlen(content);
+	printf("Read Length:%d\n", length);
+	Workflow((UCHAR*)content, length);
+	return true;
 }
 
 //开展MD5的处理流程
-void MyMD5::Workflow(UCHAR *content, UINT length) {
+void MyMD5::Workflow(UCHAR *content, UINT length) 
+{
 	//进行字段拆分并计算MD5值
 	Update(content, length);
 	UCHAR curDigest[DIGEST_LEN] = { 0 };
@@ -302,7 +311,8 @@ void MyMD5::Decode(ULONG *output, UCHAR *input, UINT len)
 }
 
 //获取封装好的数字摘要
-void MyMD5::getDigest(char *digest) {
+void MyMD5::getDigest(char *digest) 
+{
 	strcpy(digest, myDigest);
 	return ;
 }

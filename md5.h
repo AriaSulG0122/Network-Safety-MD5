@@ -1,5 +1,10 @@
 #pragma once
 
+#include <stdlib.h>
+#include <stdio.h>
+#include "string.h"
+#include "malloc.h"
+
 //类型自定义
 #define UINT  unsigned int
 #define ULONG unsigned long int 
@@ -12,6 +17,8 @@ public:
 	~MyMD5();
 	//从文件中读取内容
 	bool ReadFile(const char *pFileName);
+	//从用户输入中读取内容
+	bool ReadInput(char *content);
 	//获取封装好的数字摘要
 	void getDigest(char *digest);
 private:

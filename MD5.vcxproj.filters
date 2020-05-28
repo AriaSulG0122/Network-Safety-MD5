@@ -32,4 +32,9 @@
       <Filter>源文件</Filter>
     </Text>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="help.md">
+      <Filter>源文件</Filter>
+    </None>
+  </ItemGroup>
 </Project>
