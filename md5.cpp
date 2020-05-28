@@ -34,40 +34,28 @@
 
 //调用四个基本函数的运算过程
 #define FF(a, b, c, d, x, s, ac) { \
-	(a) += F ((b), (c), (d)) + (x) + (unsigned long int)(ac); \
+	(a) += F ((b), (c), (d)) + (x) + (ULONG)(ac); \
 	(a) = ROTATE_LEFT ((a), (s)); \
 	(a) += (b); \
 	}
 #define GG(a, b, c, d, x, s, ac) { \
-	(a) += G ((b), (c), (d)) + (x) + (unsigned long int)(ac); \
+	(a) += G ((b), (c), (d)) + (x) + (ULONG)(ac); \
 	(a) = ROTATE_LEFT ((a), (s)); \
 	(a) += (b); \
 	}
 #define HH(a, b, c, d, x, s, ac) { \
-	(a) += H ((b), (c), (d)) + (x) + (unsigned long int)(ac); \
+	(a) += H ((b), (c), (d)) + (x) + (ULONG)(ac); \
 	(a) = ROTATE_LEFT ((a), (s)); \
 	(a) += (b); \
 	}
 #define II(a, b, c, d, x, s, ac) { \
-	(a) += I ((b), (c), (d)) + (x) + (unsigned long int)(ac); \
+	(a) += I ((b), (c), (d)) + (x) + (ULONG)(ac); \
 	(a) = ROTATE_LEFT ((a), (s)); \
 	(a) += (b); \
 	}
 
-
-/* MD5 initialization. Begins an MD5 operation, writing a new context.
-*/
-
+//构造函数，初始化向量和填充位
 MyMD5::MyMD5()
-{
-	Init();
-}
-
-MyMD5::~MyMD5()
-{
-}
-//初始化向量和填充位
-void MyMD5::Init()
 {
 	this->count[0] = this->count[1] = 0;
 	//加载四个初始向量
@@ -80,71 +68,80 @@ void MyMD5::Init()
 	*pad = 0x80;
 }
 
-#define UPDATE_MD5_LEN 16 //摘要长度为128位，即16字节
-bool MyMD5::GetFileMd5(char *pMd5, const char *pFileName)
+MyMD5::~MyMD5()
+{
+	;
+}
+
+#define DIGEST_LEN 16 //摘要长度为128位，即16字节
+bool MyMD5::GetFileMd5(char *myDigest, const char *fileName)
 {
 	//打开文件
-	FILE * pFile = fopen(pFileName, "rb");
-	if (pFile == NULL)
+	FILE * curFile = fopen(fileName, "rb");
+	if (curFile == NULL)
 	{
+		printf("Can't open the file!");
 		return false;
 	}
 	//定位至文件末位
-	fseek(pFile, 0, SEEK_END);
+	fseek(curFile, 0, SEEK_END);
 	//获取文件偏移位置
-	int length = ftell(pFile);
+	int length = ftell(curFile);
 	//找到文件开头
-	fseek(pFile, 0, SEEK_SET);
+	fseek(curFile, 0, SEEK_SET);
 	//根据文件大小分配空间
-	unsigned char *pInPut = (unsigned char *)malloc(length);
+	UCHAR *fileContent = (UCHAR *)malloc(length);
 	//读取文件内容
-	fread(pInPut, 1, length, pFile);
+	fread(fileContent, 1, length, curFile);
 	//进行字段拆分并计算MD5值
-	Update(pInPut, length);
+	Update(fileContent, length);
 
-	unsigned char chDigest[UPDATE_MD5_LEN] = { 0 };
+	UCHAR curDigest[DIGEST_LEN] = { 0 };
 	//进行末尾部分的处理计算
-	Final(chDigest);
-	/*if (pInPut)
-	{
-		free(pInPut);
-	}*/
-	fclose(pFile);
+	Final(curDigest);
+	//关闭文件
+	fclose(curFile);
 	//将字节转化为16进制数
-	char szmd5[UPDATE_MD5_LEN * 2 + 1] = { 0 };
-	char szmd5buf[3] = { 0 };
-	for (int i = 0; i < UPDATE_MD5_LEN; i++)
+	char hexDigest[DIGEST_LEN * 2 + 1] = { 0 };
+	char cbuffer[3] = { 0 };
+	for (int i = 0; i < DIGEST_LEN; i++)
 	{
 		//将整型转化为字符串
-		itoa(chDigest[i], szmd5buf, 16);
-		if (0 == szmd5buf[1])
+		itoa(curDigest[i], cbuffer, 16);
+		if (0 == cbuffer[1])//高位为0
 		{
-			strcat(szmd5, "0");
-			strcat(szmd5, szmd5buf);
+			strcat(hexDigest, "0");
+			strcat(hexDigest, cbuffer);
 		}
-		else
+		else//高位不为0
 		{
-			strcat(szmd5, szmd5buf);
+			strcat(hexDigest, cbuffer);
 		}
 	}
-	strcpy(pMd5, szmd5);
+	strcpy(myDigest, hexDigest);
 	return true;
 }
+/*
+void Workfole(UCHAR content, UINT length) {
+	
+}
+*/
+
 
 //将输入划分为若干个64字节分组，然后调用transform函数进行MD5计算
-void MyMD5::Update(unsigned char *input, unsigned int inputLen)
+void MyMD5::Update(UCHAR *input, UINT inputLen)
 {
-	unsigned int i, index, partLen;
+	UINT i, index, partLen;
 
 	//计算buffer已经存放的字节数
-	index = (unsigned int)((this->count[0] >> 3) & 0x3F);//截取后六位
+	index = (UINT)((this->count[0] >> 3) & 0x3F);//截取后六位
 
 	//更新计数器count
-	if ((this->count[0] += ((unsigned long int)inputLen << 3))
-		< ((unsigned long int)inputLen << 3))
+	if ((this->count[0] += ((ULONG)inputLen << 3))
+		< ((ULONG)inputLen << 3))
 		this->count[1]++;//低位部分，产生进位
 	//高位部分直接加
-	this->count[1] += ((unsigned long int)inputLen >> 29);
+	this->count[1] += ((ULONG)inputLen >> 29);
 
 	//求出buffer中剩余的长度
 	partLen = 64 - index;
@@ -152,8 +149,8 @@ void MyMD5::Update(unsigned char *input, unsigned int inputLen)
 	//将数据块逐块进行MD5运算
 	if (inputLen >= partLen) {
 		//第一块要带上buffer
-		memcpy((unsigned char*)&this->buffer[index],
-			(unsigned char*)input, partLen);
+		memcpy((UCHAR*)&this->buffer[index],
+			(UCHAR*)input, partLen);
 		Tranform(this->state, this->buffer);
 		//后续每块64字节
 		for (i = partLen; i + 63 < inputLen; i += 64)
@@ -166,40 +163,14 @@ void MyMD5::Update(unsigned char *input, unsigned int inputLen)
 	}
 
 	//将不足64字节的数据复制到buffer中
-	memcpy((unsigned char*)&this->buffer[index], (unsigned char*)&input[i], inputLen - i);
-}
-
-//进行末尾部分的处理，形成最终的数字摘要
-void MyMD5::Final(unsigned char digest[16])
-{
-	unsigned char bits[8];
-	unsigned int index, padLen;
-
-	//将双字转化为字节，记录之前的长度
-	Encode(bits, this->count, 8);
-
-	//获取现在的长度余数
-	index = (unsigned int)((this->count[0] >> 3) & 0x3f);
-	//在消息后填充一位1和若干位0，120=56+64
-	padLen = (index < 56) ? (56 - index) : (120 - index);
-	//对这填充位进行MD5计算
-	Update(pad, padLen);
-
-	//后面加上一个8字节表示的填充前的消息长度
-	Update(bits, 8);
-	//将字节转为双字，记录在digest中
-	Encode(digest, this->state, 16);
-
-	//将敏感信息清零，避免攻击
-	//memset((unsigned char*)this, 0, sizeof(*this));
-	//this->Init();
+	memcpy((UCHAR*)&this->buffer[index], (UCHAR*)&input[i], inputLen - i);
 }
 
 //对一个512比特消息分组进行MD5计算
-void MyMD5::Tranform(unsigned long int state[4], unsigned char block[64])
+void MyMD5::Tranform(ULONG state[4], UCHAR block[64])
 {
 	//给ABCD赋初始值
-	unsigned long int a = state[0], b = state[1], c = state[2], d = state[3], x[16];
+	ULONG a = state[0], b = state[1], c = state[2], d = state[3], x[16];
 
 	//将双字转为字节
 	Decode(x, block, 64);
@@ -281,32 +252,49 @@ void MyMD5::Tranform(unsigned long int state[4], unsigned char block[64])
 	state[1] += b;
 	state[2] += c;
 	state[3] += d;
+}
 
-	//将x清零
-	memset((unsigned char*)x, 0, sizeof(x));
+//进行末尾部分的处理，形成最终的数字摘要
+void MyMD5::Final(UCHAR digest[16])
+{
+	UCHAR bits[8];
+	UINT index, padLen;
+
+	//将双字转化为字节，记录之前的长度
+	Encode(bits, this->count, 8);
+
+	//获取现在的长度余数
+	index = (UINT)((this->count[0] >> 3) & 0x3f);
+	//在消息后填充一位1和若干位0，120=56+64
+	padLen = (index < 56) ? (56 - index) : (120 - index);
+	//对这填充位进行MD5计算
+	Update(pad, padLen);
+
+	//后面加上一个8字节表示的填充前的消息长度
+	Update(bits, 8);
+	//将字节转为双字，记录在digest中
+	Encode(digest, this->state, 16);
 }
 
 //将双字转为字节
-void MyMD5::Encode(unsigned char *output, unsigned long int *input, unsigned int len)
+void MyMD5::Encode(UCHAR *output, ULONG *input, UINT len)
 {
-	unsigned int i, j;
-
+	UINT i, j;
 	for (i = 0, j = 0; j < len; i++, j += 4) {
-		output[j] = (unsigned char)(input[i] & 0xff);
-		output[j + 1] = (unsigned char)((input[i] >> 8) & 0xff);
-		output[j + 2] = (unsigned char)((input[i] >> 16) & 0xff);
-		output[j + 3] = (unsigned char)((input[i] >> 24) & 0xff);
+		output[j] = (UCHAR)(input[i] & 0xff);
+		output[j + 1] = (UCHAR)((input[i] >> 8) & 0xff);
+		output[j + 2] = (UCHAR)((input[i] >> 16) & 0xff);
+		output[j + 3] = (UCHAR)((input[i] >> 24) & 0xff);
 	}
 }
 
 //将字节转为双字
-void MyMD5::Decode(unsigned long int *output, unsigned char *input, unsigned int len)
+void MyMD5::Decode(ULONG *output, UCHAR *input, UINT len)
 {
-	unsigned int i, j;
+	UINT i, j;
 
 	for (i = 0, j = 0; j < len; i++, j += 4) {
-		output[i] = ((unsigned long int)input[j]) | (((unsigned long int)input[j + 1]) << 8) |
-			(((unsigned long int)input[j + 2]) << 16) | (((unsigned long int)input[j + 3]) << 24);
+		output[i] = ((ULONG)input[j]) | (((ULONG)input[j + 1]) << 8) |
+			(((ULONG)input[j + 2]) << 16) | (((ULONG)input[j + 3]) << 24);
 	}
-
 }
