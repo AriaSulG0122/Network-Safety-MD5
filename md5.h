@@ -10,7 +10,10 @@ class MyMD5 {
 public:
 	MyMD5();
 	~MyMD5();
-	bool GetFileMd5(char *pMd5, const char *pFileName);
+	//从文件中读取内容
+	bool ReadFile(const char *pFileName);
+	//获取封装好的数字摘要
+	void getDigest(char *digest);
 private:
 	/*
 	*********数据区*********
@@ -23,10 +26,12 @@ private:
 	UCHAR buffer[64];
 	//填充位
 	UCHAR pad[64];
-
+	char myDigest[129];
 	/*
 	*********函数区*********
 	*/
+	//开展MD5的处理流程
+	void Workflow(UCHAR *content, UINT length);
 	//将输入划分为若干个64字节分组，然后调用transform函数进行MD5计算
 	void Update(UCHAR *input, UINT inputLen);
 	//对一个512比特消息分组进行MD5计算

@@ -74,7 +74,7 @@ MyMD5::~MyMD5()
 }
 
 #define DIGEST_LEN 16 //摘要长度为128位，即16字节
-bool MyMD5::GetFileMd5(char *myDigest, const char *fileName)
+bool MyMD5::ReadFile(const char *fileName)
 {
 	//打开文件
 	FILE * curFile = fopen(fileName, "rb");
@@ -93,14 +93,20 @@ bool MyMD5::GetFileMd5(char *myDigest, const char *fileName)
 	UCHAR *fileContent = (UCHAR *)malloc(length);
 	//读取文件内容
 	fread(fileContent, 1, length, curFile);
-	//进行字段拆分并计算MD5值
-	Update(fileContent, length);
+	//开展MD5的处理流程
+	Workflow(fileContent, length);
+	//关闭文件
+	fclose(curFile);
+	
+}
 
+//开展MD5的处理流程
+void MyMD5::Workflow(UCHAR *content, UINT length) {
+	//进行字段拆分并计算MD5值
+	Update(content, length);
 	UCHAR curDigest[DIGEST_LEN] = { 0 };
 	//进行末尾部分的处理计算
 	Final(curDigest);
-	//关闭文件
-	fclose(curFile);
 	//将字节转化为16进制数
 	char hexDigest[DIGEST_LEN * 2 + 1] = { 0 };
 	char cbuffer[3] = { 0 };
@@ -119,13 +125,9 @@ bool MyMD5::GetFileMd5(char *myDigest, const char *fileName)
 		}
 	}
 	strcpy(myDigest, hexDigest);
-	return true;
+	return;
 }
-/*
-void Workfole(UCHAR content, UINT length) {
-	
-}
-*/
+
 
 
 //将输入划分为若干个64字节分组，然后调用transform函数进行MD5计算
@@ -297,4 +299,10 @@ void MyMD5::Decode(ULONG *output, UCHAR *input, UINT len)
 		output[i] = ((ULONG)input[j]) | (((ULONG)input[j + 1]) << 8) |
 			(((ULONG)input[j + 2]) << 16) | (((ULONG)input[j + 3]) << 24);
 	}
+}
+
+//获取封装好的数字摘要
+void MyMD5::getDigest(char *digest) {
+	strcpy(digest, myDigest);
+	return ;
 }
